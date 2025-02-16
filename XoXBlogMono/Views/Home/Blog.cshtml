@@ -1,0 +1,46 @@
+﻿@model XoXBlogMono.Models.GeneralModel
+@{
+    ViewData["Title"] = "Privacy Policy";
+}
+
+
+
+<div id="main-content" class="blog-page">
+    <div class="container">
+        <div class="row clearfix">
+            <div class="col-lg-8 col-md-12 left-box">
+                <div class="card single_post">
+                    <div class="body">
+                        <div class="img-post">
+                            <img class="d-block  w-100  " src="@Model.Post.BannerImage" alt="First slide">
+                        </div>
+                       <div class="p-3">
+ <h3>
+                            <a
+                                href="/category/@SeoUrl.GetSeoUrl(Model.Post.Category.Name)-@Model.Post.Category.Id/@SeoUrl.GetSeoUrl(Model.Post.Title)-@Model.Post.Id">@Model.Post.Title</a>
+                        </h3>
+                        <p>@Html.Raw(Model.Post.Text)</p>
+                       </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <!-- Categories widget-->
+                <div class="card mb-4">
+                    <div class="card-header">Kategoriler</div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            @foreach (var category in Model.Categories)
+                            {
+                                <a class="list-group-item list-group-item-action list-group-item-light p-3"
+                                    href="/category/@SeoUrl.GetSeoUrl(category.Name)-@category.Id">@category.Name</a>
+                            }
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

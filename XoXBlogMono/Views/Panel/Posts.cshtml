@@ -1,0 +1,224 @@
+@model XoXBlogMono.Models.DTOs.PanelDto
+@{
+    ViewData["Title"] = "Yazılar";
+    Layout = "_PanelLayout";
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Yazılar</h5>
+        <button class="btn btn-primary btn-sm" onclick="showAddModal()">Yeni Yazı</button>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Başlık</th>
+                    <th>Kategori</th>
+                    <th>Yazar</th>
+                    <th>Tarih</th>
+                    <th>Durum</th>
+                    <th class="table-actions">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var post in Model.Posts)
+                {
+                    <tr>
+                        <td>@post.Title</td>
+                        <td>@post.Category?.Name</td>
+                        <td>@post.Owner?.NameSurname</td>
+                        <td>@post.CreatedAt.ToString("dd.MM.yyyy")</td>
+                        <td>@(post.Status == 1 ? "Aktif" : "Pasif")</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-warning" onclick="getPost(@post.Id)">Düzenle</button>
+                                <button class="btn btn-danger" onclick="deletePost(@post.Id)">Sil</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="postModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Yazı Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="postForm">
+                    <input type="hidden" name="Id" id="postId" />
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Başlık</label>
+                            <input type="text" class="form-control" name="Title" id="postTitle">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kategori</label>
+                            <select class="form-select" name="CategoryId" id="postCategoryId">
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Banner Resmi</label>
+                        <div class="image-preview" id="imagePreview">
+                            <img src="" alt="" style="display: none;" id="previewImg">
+                            <div class="upload-placeholder" id="uploadPlaceholder">
+                                <i class="fas fa-cloud-upload-alt fa-3x mb-2"></i>
+                                <div>Resim yüklemek için tıklayın veya sürükleyin</div>
+                            </div>
+                        </div>
+                        <div class="upload-btn-wrapper">
+                            <button class="btn btn-secondary w-100">Resim Seç</button>
+                            <input type="file" accept="image/*" name="bannerImage" id="postBannerImage" onchange="previewImage(this)">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">İçerik</label>
+                        <textarea class="form-control" name="Text" id="postText" rows="5"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Anahtar Kelimeler</label>
+                            <input type="text" class="form-control" name="Keywords" id="postKeywords">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Sıra</label>
+                            <input type="number" class="form-control" name="Order" id="postOrder">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Durum</label>
+                            <select class="form-select" name="Status" id="postStatus">
+                                <option value="1">Aktif</option>
+                                <option value="0">Pasif</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="hidden" name="OwnerId" value="1" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="savePost()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+<script>
+    let isEdit = false;
+    const modal = new bootstrap.Modal(document.getElementById('postModal'));
+    let uploadedFile = null;
+
+    function previewImage(input) {
+        const preview = document.getElementById('previewImg');
+        const placeholder = document.getElementById('uploadPlaceholder');
+        const previewDiv = document.getElementById('imagePreview');
+        
+        if (input.files && input.files[0]) {
+            uploadedFile = input.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+                previewDiv.classList.add('has-image');
+            }
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function showAddModal() {
+        isEdit = false;
+        document.getElementById('modalTitle').textContent = 'Yazı Ekle';
+        document.getElementById('postId').value = '';
+        document.getElementById('postTitle').value = '';
+        document.getElementById('previewImg').src = '';
+        document.getElementById('previewImg').style.display = 'none';
+        document.getElementById('uploadPlaceholder').style.display = 'block';
+        document.getElementById('imagePreview').classList.remove('has-image');
+        document.getElementById('postText').value = '';
+        document.getElementById('postKeywords').value = '';
+        document.getElementById('postOrder').value = '0';
+        document.getElementById('postStatus').value = '1';
+        uploadedFile = null;
+        modal.show();
+    }
+
+    function getPost(id) {
+        $.get('/Panel/GetPost/' + id, function(post) {
+            if (post) {
+                isEdit = true;
+                document.getElementById('modalTitle').textContent = 'Yazı Düzenle';
+                document.getElementById('postId').value = post.id;
+                document.getElementById('postTitle').value = post.title;
+                document.getElementById('postCategoryId').value = post.categoryId;
+                if (post.bannerImage) {
+                    document.getElementById('previewImg').src = post.bannerImage;
+                    document.getElementById('previewImg').style.display = 'block';
+                    document.getElementById('uploadPlaceholder').style.display = 'none';
+                    document.getElementById('imagePreview').classList.add('has-image');
+                }
+                document.getElementById('postText').value = post.text;
+                document.getElementById('postKeywords').value = post.keywords;
+                document.getElementById('postOrder').value = post.order;
+                document.getElementById('postStatus').value = post.status;
+                modal.show();
+            }
+        });
+    }
+
+    function savePost() {
+        const formData = new FormData(document.getElementById('postForm'));
+        
+        $.ajax({
+            url: isEdit ? '/Panel/PostUpdate' : '/Panel/PostAdd',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    modal.hide();
+                    location.reload();
+                } else {
+                    if (response.errors) {
+                        alert('Hatalar:\n' + response.errors.join('\n'));
+                    } else if (response.error) {
+                        alert('Hata: ' + response.error);
+                    } else {
+                        alert('Bir hata oluştu!');
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Sistem hatası: ' + error);
+            }
+        });
+    }
+
+    function deletePost(id) {
+        if (confirm('Bu yazıyı silmek istediğinizden emin misiniz?')) {
+            $.post('/Panel/PostDelete', { id: id }, function(response) {
+                if (response.success) {
+                    location.reload();
+                }
+            });
+        }
+    }
+</script>
+} 

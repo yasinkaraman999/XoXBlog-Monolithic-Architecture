@@ -1,0 +1,141 @@
+@model XoXBlogMono.Models.DTOs.PanelDto
+@{
+    ViewData["Title"] = "Kategoriler";
+    Layout = "_PanelLayout";
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Kategoriler</h5>
+        <button class="btn btn-primary btn-sm" onclick="showAddModal()">Yeni Kategori</button>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Ad</th>
+                    <th>Sıra</th>
+                    <th>Durum</th>
+                    <th class="table-actions">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in Model.Categories)
+                {
+                    <tr>
+                        <td>@category.Name</td>
+                        <td>@category.Order</td>
+                        <td>@(category.Status == 1 ? "Aktif" : "Pasif")</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-warning" onclick="getCategory(@category.Id)">Düzenle</button>
+                                <button class="btn btn-danger" onclick="deleteCategory(@category.Id)">Sil</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Kategori Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="categoryId" />
+                <div class="mb-3">
+                    <label class="form-label">Kategori Adı</label>
+                    <input type="text" class="form-control" id="categoryName">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Sıra</label>
+                    <input type="number" class="form-control" id="categoryOrder">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Durum</label>
+                    <select class="form-select" id="categoryStatus">
+                        <option value="1">Aktif</option>
+                        <option value="0">Pasif</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="saveCategory()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let isEdit = false;
+    const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+
+    function showAddModal() {
+        isEdit = false;
+        document.getElementById('modalTitle').textContent = 'Kategori Ekle';
+        document.getElementById('categoryId').value = '';
+        document.getElementById('categoryName').value = '';
+        document.getElementById('categoryOrder').value = '';
+        document.getElementById('categoryStatus').value = '1';
+        modal.show();
+    }
+
+    function getCategory(id) {
+        $.get('/Panel/GetCategory/' + id, function(category) {
+            if (category) {
+                isEdit = true;
+                document.getElementById('modalTitle').textContent = 'Kategori Düzenle';
+                document.getElementById('categoryId').value = category.id;
+                document.getElementById('categoryName').value = category.name;
+                document.getElementById('categoryOrder').value = category.order;
+                document.getElementById('categoryStatus').value = category.status;
+                modal.show();
+            }
+        });
+    }
+
+    function saveCategory() {
+        const category = {
+            id: document.getElementById('categoryId').value,
+            name: document.getElementById('categoryName').value,
+            order: parseInt(document.getElementById('categoryOrder').value),
+            status: parseInt(document.getElementById('categoryStatus').value)
+        };
+
+        if (isEdit) {
+            category.id = parseInt(category.id);
+        }
+
+        $.ajax({
+            url: isEdit ? '/Panel/CategoryUpdate' : '/Panel/CategoryAdd',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(category),
+            success: function(response) {
+                if (response.success) {
+                    modal.hide();
+                    location.reload();
+                }
+            }
+        });
+    }
+
+    function deleteCategory(id) {
+        if (confirm('Bu kategoriyi silmek istediğinizden emin misiniz?')) {
+            $.post('/Panel/CategoryDelete', { id: id }, function(response) {
+                if (response.success) {
+                    location.reload();
+                }
+            });
+        }
+    }
+</script>
+} 

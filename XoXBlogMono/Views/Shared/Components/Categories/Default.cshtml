@@ -1,0 +1,5 @@
+@model IEnumerable<XoXBlogMono.DBModels.Category>
+@foreach (var category in Model)
+{
+    <option value="@category.Id">@category.Name</option>
+} 
